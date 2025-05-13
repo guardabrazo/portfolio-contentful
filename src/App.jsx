@@ -123,15 +123,16 @@ function App() {
   const [targetRotation, setTargetRotation] = useState(null); // State for target angle
   const [isAnimatingToTarget, setIsAnimatingToTarget] = useState(false); // State for animation status
   const [isPillHovered, setIsPillHovered] = useState(false); // State for pill hover
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(false); // Default to desktop view initially
   const CAROUSEL_RADIUS = 3.5; 
 
   useEffect(() => {
-    const handleResize = () => {
+    const checkViewport = () => {
       setIsMobileView(window.innerWidth < 768);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    checkViewport(); // Check on initial mount
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
   useEffect(() => {

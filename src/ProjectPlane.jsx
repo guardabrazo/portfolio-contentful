@@ -44,16 +44,33 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
     if (videoUrl) {
       videoElement = document.createElement('video'); videoRef.current = videoElement; 
       videoElement.src = videoUrl; videoElement.crossOrigin = 'anonymous'; videoElement.loop = true; videoElement.muted = true; videoElement.playsInline = true;
-      // Use 'loadeddata' event instead of 'canplaythrough' for earlier texture creation
+      // Use 'loadedmetadata' event
       onCanPlayHandler = () => { 
-        currentTexture = new THREE.VideoTexture(videoElement); 
-        setTexture(currentTexture); 
-        videoElement.pause(); // Ensure it's paused initially
+        if (videoElement) { // Ensure videoElement still exists
+          currentTexture = new THREE.VideoTexture(videoElement);
+          // currentTexture.minFilter = THREE.LinearFilter; // Optional: improve quality
+          // currentTexture.magFilter = THREE.LinearFilter; // Optional: improve quality
+          // currentTexture.format = THREE.RGBFormat; // Optional: if alpha not needed
+          
+          setTexture(currentTexture); 
+          
+          // Ensure video is paused after texture creation
+          videoElement.pause();
+
+          // It might be beneficial to ensure the material updates after texture is set
+          // This is often handled by R3F, but for VideoTexture, explicit update can sometimes help.
+          // If groupRef.current and its material exist, you could try:
+          // if (groupRef.current?.children[0]?.material) {
+          //   groupRef.current.children[0].material.needsUpdate = true;
+          // }
+        }
       };
-      videoElement.addEventListener('loadeddata', onCanPlayHandler); // Changed event
-      videoElement.load();
+      videoElement.addEventListener('loadedmetadata', onCanPlayHandler); // Changed event
+      videoElement.load(); // Start loading the video
     } else if (posterImageUrl) {
       currentTexture = new THREE.TextureLoader().load(posterImageUrl, (tex) => {
+        // tex.minFilter = THREE.LinearFilter; // Optional
+        // tex.magFilter = THREE.LinearFilter; // Optional
         setTexture(tex); 
       }, undefined, (err) => {
         console.error('Error loading image texture:', err, posterImageUrl);
@@ -61,8 +78,13 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
       setTexture(currentTexture); 
     }
     return () => {
-      if (videoElement && onCanPlayHandler) { videoElement.removeEventListener('loadeddata', onCanPlayHandler); } // Changed event
-      if (videoElement) { videoElement.pause(); videoElement.src = ''; videoRef.current = null; }
+      if (videoElement && onCanPlayHandler) { videoElement.removeEventListener('loadedmetadata', onCanPlayHandler); } // Changed event
+      if (videoElement) { 
+        videoElement.pause(); 
+        videoElement.src = ''; // Release video resource
+        videoElement.load(); // Abort any ongoing loading
+        videoRef.current = null; 
+      }
       if (currentTexture) { currentTexture.dispose(); }
       setTexture(null); 
     };
