@@ -1,0 +1,35 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 15px; /* Adjust padding as needed */
+  /* border-bottom: 2px solid black; */
+  position: fixed; /* Fixed at the top */
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: white; /* Ensure it has a background */
+  z-index: 100; /* Keep it above other content like canvas */
+  box-sizing: border-box;
+}
+
+.header-name {
+  font-size: 2.75em; /* Adjust size */
+  font-weight: 500; /* Black weight for impact */
+  /* text-transform: uppercase;*/
+}
+
+.header-nav a {
+  font-size: 2.0em; /* Adjust size */
+  font-weight: 400; /* Bold weight */
+  text-decoration: none;
+  color: black;
+  margin-left: 20px; /* Space between nav links */
+  /* text-transform: uppercase; */
+}
+
+.header-nav a:hover {
+  text-decoration: underline; /* Simple hover effect */
+}
+
+/* Removed .header-pill-link styles */

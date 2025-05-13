@@ -1,0 +1,203 @@
+/* Basic reset or minimal styles */
+body {
+  margin: 0;
+  font-family: 'Darker Grotesque', sans-serif; /* Updated font */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff; /* White background */
+  color: #000000; /* Black text for contrast */
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* Prevent scrollbars if canvas is slightly off */
+  background-color: #ffffff; /* Ensure root background is also white */
+}
+
+h1 {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  color: #000000; /* Black text for contrast on white background */
+}
+
+.project-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: transparent; /* Transparent background */
+  padding: 0; /* Remove padding, grid gaps will handle spacing */
+  box-sizing: border-box;
+  z-index: 20; 
+  max-height: 35vh; /* Allow slightly more height for grid */
+  overflow-y: auto; 
+  /* border-top: 2px solid black;  */
+  font-family: 'Darker Grotesque', sans-serif; 
+  
+  /* Flex Layout for two main blocks */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align items to the top by default */
+  padding: 10px 15px; /* Add some overall padding to the footer */
+  /* Base styles - transition applied by react-transition-group classes */
+}
+
+.footer-left-block {
+  flex-basis: 70%;
+  padding-right: 15px; /* Space between left and right blocks */
+}
+
+.footer-right-block {
+  flex-basis: 30%;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Push both client and year to the bottom */
+  align-self: stretch; /* Make right block take full height of footer row */
+}
+
+/* react-transition-group classes for fade effect */
+.fade-enter {
+  opacity: 0;
+}
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 400ms ease-in-out;
+}
+.fade-exit {
+  opacity: 1;
+}
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 400ms ease-in-out;
+}
+
+
+/* Remove old .footer-item and grid area styles */
+
+.footer-title-text { /* Corresponds to old .project-footer h2 */
+  margin: 0 0 5px 0; /* Small margin below title */
+  font-size: 2.5em; /* Adjust size */
+  font-weight: 500; 
+  text-transform: uppercase; /* Make title uppercase */
+  line-height: 1;
+}
+
+.footer-description-text, 
+.footer-client-text, 
+.footer-year-text { /* Corresponds to old .project-footer p */
+  margin: 0; 
+  font-size: 2em; /* Adjust size */
+  line-height: 1; 
+  font-weight: 400; 
+}
+
+.footer-client-text {
+  margin-bottom: 2px; /* Small space between Client and Year if needed */
+}
+
+.footer-client-text strong, 
+.footer-year-text strong { /* Keep strong tags bold */
+  font-weight: 500;
+}
+
+/* No line break for title and description (they are block elements, so this is default) */
+/* No line break for client and year (they are block elements, so this is default) */
+/* Client and Year are in footer-right-block which is flex-column and space-between, year will be at bottom */
+
+/* Styling for the on-plane HTML link */
+/* This class is applied to the div rendered by <Html> via its className prop */
+.project-link-on-plane {
+  pointer-events: none; /* Allows R3F to detect pointer events on the 3D group underneath */
+}
+
+.project-link-on-plane a {
+  pointer-events: auto; /* Makes the link itself clickable again */
+  display: inline-block;
+  padding: 0px 5px; /* Increased padding for a "pill" shape */
+  background-color: white; /* White background */
+  color: black; /* Black text */
+  text-decoration: none;
+  border-radius: 20px; /* Rounded corners for pill shape */
+  font-size: 20px; /* Adjust as needed */
+  text-transform: uppercase; /* Make text uppercase */
+  white-space: nowrap; /* Ensure text stays on one line */
+  transform-origin: center; /* Ensure scaling happens from the center */
+  /* border-bottom: 1px solid transparent; */ /* Reverted */
+  transition: transform 0.2s ease-out, text-decoration 0.1s linear; /* Reverted */
+}
+
+.project-link-on-plane a:hover {
+  text-decoration: underline; /* Restore text-decoration underline */
+  /* border-bottom: 1px solid rgba(0, 0, 0, 0.5); */ /* Reverted */
+  transform: scale(1.1); /* Scale up by 10% on hover */
+  /* background-color: #f0f0f0; */ /* Removed hover background color change */
+  /* No box-shadow change on hover either */
+}
+
+/* Mobile Project List Styles */
+.mobile-project-list {
+  padding: 0 0 20px 0; /* Remove horizontal padding, keep bottom. Top padding handled by app-container or header. */
+  padding-top: 80px; /* Account for fixed header height if any - adjust if header height changes */
+  box-sizing: border-box;
+}
+
+.mobile-project-item {
+  margin-bottom: 30px;
+  padding: 0 15px 20px 15px; /* Add horizontal padding here instead of list */
+  border-bottom: 1px solid black; /* Solid black, full width due to no parent horizontal padding */
+}
+
+.mobile-project-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.mobile-project-image {
+  width: 100%;
+  max-width: 400px; /* Limit image width on slightly larger mobile screens */
+  height: auto;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+.mobile-project-title-link {
+  text-decoration: none;
+  color: inherit; /* Inherit color from h3 */
+}
+.mobile-project-title-link:hover .mobile-project-title {
+  text-decoration: underline; /* Underline title text on link hover */
+}
+
+.mobile-project-title { /* Style like .footer-title-text */
+  margin: 0 0 5px 0; 
+  font-size: 2.5em; 
+  font-weight: 500; 
+  text-transform: uppercase; 
+  line-height: 1;
+  color: #000; /* Match desktop footer title color */
+}
+
+.mobile-project-description { /* Style like .footer-description-text */
+  margin: 0 0 15px 0; 
+  font-size: 2em; 
+  line-height: 1; 
+  font-weight: 400; 
+  color: #000; /* Match desktop footer text color */
+}
+
+.mobile-project-details p { /* Style like .footer-client-text / .footer-year-text */
+  margin: 0 0 2px 0; 
+  font-size: 2em; 
+  line-height: 1; 
+  font-weight: 400; 
+  color: #000; /* Match desktop footer text color */
+}
+.mobile-project-details p strong { /* Style like .footer-client-text strong */
+  font-weight: 500;
+}
+
+/* Remove .mobile-project-view-link styles as it's removed from JSX */
