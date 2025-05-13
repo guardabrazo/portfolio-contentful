@@ -44,8 +44,13 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
     if (videoUrl) {
       videoElement = document.createElement('video'); videoRef.current = videoElement; 
       videoElement.src = videoUrl; videoElement.crossOrigin = 'anonymous'; videoElement.loop = true; videoElement.muted = true; videoElement.playsInline = true;
-      onCanPlayHandler = () => { currentTexture = new THREE.VideoTexture(videoElement); setTexture(currentTexture); videoElement.pause(); };
-      videoElement.addEventListener('canplaythrough', onCanPlayHandler);
+      // Use 'loadeddata' event instead of 'canplaythrough' for earlier texture creation
+      onCanPlayHandler = () => { 
+        currentTexture = new THREE.VideoTexture(videoElement); 
+        setTexture(currentTexture); 
+        videoElement.pause(); // Ensure it's paused initially
+      };
+      videoElement.addEventListener('loadeddata', onCanPlayHandler); // Changed event
       videoElement.load();
     } else if (posterImageUrl) {
       currentTexture = new THREE.TextureLoader().load(posterImageUrl, (tex) => {
@@ -56,7 +61,7 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
       setTexture(currentTexture); 
     }
     return () => {
-      if (videoElement && onCanPlayHandler) { videoElement.removeEventListener('canplaythrough', onCanPlayHandler); }
+      if (videoElement && onCanPlayHandler) { videoElement.removeEventListener('loadeddata', onCanPlayHandler); } // Changed event
       if (videoElement) { videoElement.pause(); videoElement.src = ''; videoRef.current = null; }
       if (currentTexture) { currentTexture.dispose(); }
       setTexture(null); 
