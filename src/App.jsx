@@ -249,7 +249,7 @@ function App() {
           <MobileProjectList projects={displayableProjects} />
         ) : (
           <>
-            <Canvas camera={{ position: [0, 2, 12], fov: 50 }}> 
+            <Canvas camera={{ position: [0, 2, 9], fov: 50 }}> 
               <color attach="background" args={['#ffffff']} />
               <ambientLight intensity={1.0} /> 
               <pointLight position={[0, 10, 10]} intensity={0.5} />
