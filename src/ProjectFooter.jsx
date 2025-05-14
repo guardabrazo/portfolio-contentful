@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'; // Import useState, 
 import { CSSTransition } from 'react-transition-group'; // Import CSSTransition
 
 // Added isVisible prop
-function ProjectFooter({ projectDetails, isVisible }) { 
+function ProjectFooter({ projectDetails, isVisible }) { // Removed onResumeCarousel prop
   const [detailsForRender, setDetailsForRender] = useState(projectDetails);
   const nodeRef = useRef(null); // Create the ref here
 
@@ -26,14 +26,30 @@ function ProjectFooter({ projectDetails, isVisible }) {
       nodeRef={nodeRef}
     >
       <div className="project-footer" ref={nodeRef}>
-        <div className="footer-left-block">
-          {title && <h2 className="footer-title-text">{title}</h2>}
+        {/* Column 1: Title, Pill & Description */}
+        <div className="footer-col1 footer-title-description-block">
+          <div className="footer-title-pill-wrapper">
+            {title && <h2 className="footer-title-text">{title}</h2>}
+            {detailsForRender?.link && (
+              <a 
+                href={detailsForRender.link} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="footer-project-pill"
+              >
+                FULL PROJECT
+              </a>
+            )}
+          </div>
           {description && <p className="footer-description-text">{typeof description === 'string' ? description : 'Description not available.'}</p>}
         </div>
-        <div className="footer-right-block">
+        {/* Column 2: Client & Year */}
+        <div className="footer-col2 footer-client-year-block">
           {client && <p className="footer-client-text"><strong>Client:</strong> {client}</p>}
           {year && <p className="footer-year-text"><strong>Year:</strong> {year}</p>}
         </div>
+        {/* Column 3 (View Full Project Link) removed */}
+       
       </div>
     </CSSTransition>
   );

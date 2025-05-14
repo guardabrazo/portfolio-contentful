@@ -28,11 +28,11 @@ const RoundedRectMaterial = shaderMaterial(
 );
 extend({ RoundedRectMaterial });
 
-// Accept index, onResumeCarousel, planeScale, and onPillHover props
-function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel, isFocused, planeScale = 1.0, onPillHover }) { // Default scale to 1
+// Accept index, onResumeCarousel, planeScale. Removed onProjectLinkHover.
+function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel, isFocused, planeScale = 1.0 }) { 
   const groupRef = useRef(); 
   const [hovered, setHovered] = useState(false);
-  const isPointerOverHtmlRef = useRef(false); 
+  // isPointerOverHtmlRef is no longer needed as the HTML pill is removed
   const randomZRotation = useMemo(() => MathUtils.randFloatSpread(0.2), []);
   const videoRef = useRef(null); 
   const [texture, setTexture] = useState(null); 
@@ -132,15 +132,8 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
         onPointerOver={(event) => { event.stopPropagation(); setHovered(true); }}
         onPointerOut={(event) => {
           event.stopPropagation();
-          // Call onResumeCarousel when pointer leaves plane and HTML
-          setTimeout(() => {
-            if (!isPointerOverHtmlRef.current) { 
-              setHovered(false); 
-              if (onResumeCarousel) {
-                onResumeCarousel(); 
-              }
-            }
-          }, 0);
+          setHovered(false); 
+          // No longer call onResumeCarousel here
         }}
         onClick={(event) => { 
           event.stopPropagation(); 
@@ -154,24 +147,7 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
           <planeGeometry args={[basePlaneSize, basePlaneSize]} /> 
           <roundedRectMaterial map={texture} radius={0.15} smoothness={0.01} transparent={true} toneMapped={false} />
         </mesh>
-        {/* Position Html towards the bottom of the plane, ensuring it's visually on the plane. */}
-        <Html position-y={0} position-z={0.05} center className="project-link-on-plane" style={{ display: (isFocused && project.fields.link) ? 'block' : 'none' }}>
-          <div 
-            onMouseEnter={() => { 
-              isPointerOverHtmlRef.current = true; 
-              setHovered(true); // Keep this for plane hover effects if any are still desired on pill hover
-              if (onPillHover) onPillHover(true); 
-            }}
-            onMouseLeave={() => { 
-              isPointerOverHtmlRef.current = false; 
-              // setHovered(false) will be handled by the main group's onPointerOut
-              if (onPillHover) onPillHover(false);
-            }}
-            style={{ pointerEvents: 'auto' }} 
-          >
-            {project.fields.link && (<a href={project.fields.link} target="_blank" rel="noopener noreferrer" style={{pointerEvents: 'auto'}}>Full Project</a>)}
-          </div>
-        </Html>
+        {/* "GO TO FULL PROJECT" link removed from here */}
         {/* Debug angle display REMOVED */}
       </group>
     </Billboard>

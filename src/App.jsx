@@ -5,17 +5,18 @@ import ProjectPlane from './ProjectPlane';
 import ProjectFooter from './ProjectFooter';
 import Header from './Header';
 import MobileProjectList from './MobileProjectList'; // Import MobileProjectList
+import InfoModal from './InfoModal'; // Import InfoModal
 import * as THREE from 'three';
 import { Vector3 } from 'three'; // Import Vector3
 import './App.css';
 
 // Component for subtle camera movement based on mouse
-function CameraRig({ children, isPillHovered }) { // Added isPillHovered prop
+function CameraRig({ children }) { // Removed isHTMLLinkHovered
   const vec = new Vector3();
   useFrame((state) => {
-    if (isPillHovered) { // If pill is hovered, don't move camera
-      return;
-    }
+    // if (isHTMLLinkHovered) { // Logic removed
+    //   return;
+    // }
     // Lerp camera position based on normalized mouse coords (-1 to 1)
     // Only move vertically
     const targetX = 0; // Keep X fixed
@@ -38,8 +39,8 @@ function ProjectCarousel({
   targetRotation, 
   isAnimatingToTarget, 
   handleAnimationComplete,
-  onResumeCarousel, // Add onResumeCarousel to props destructuring
-  onPillHover // Add onPillHover prop
+  onResumeCarousel // Add onResumeCarousel to props destructuring
+  // onProjectLinkHover removed
 }) { 
   const groupRef = useRef();
   const numProjects = projects.length;
@@ -108,7 +109,7 @@ function ProjectCarousel({
             onPlaneClick={(idx) => onProjectClick(project, idx)} 
             onResumeCarousel={onResumeCarousel} // Pass down onResumeCarousel
             isFocused={project.sys.id === focusedProjectId}
-            onPillHover={onPillHover} // Pass down onPillHover
+            // onProjectLinkHover removed
           />
         );
       })}
@@ -122,8 +123,11 @@ function App() {
   const [focusedProject, setFocusedProject] = useState(null); 
   const [targetRotation, setTargetRotation] = useState(null); // State for target angle
   const [isAnimatingToTarget, setIsAnimatingToTarget] = useState(false); // State for animation status
-  const [isPillHovered, setIsPillHovered] = useState(false); // State for pill hover
+  // const [isHTMLLinkHovered, setIsHTMLLinkHovered] = useState(false); // Removed
   const [isMobileView, setIsMobileView] = useState(false); // Default to desktop view initially
+  const [aboutContent, setAboutContent] = useState(null); // State for about content
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); // State for modal visibility
+  const justFocusedRef = useRef(false); // Ref to handle click race condition
   const CAROUSEL_RADIUS = 3.5; 
 
   useEffect(() => {
@@ -140,6 +144,14 @@ function App() {
       .then((response) => {
         const fetchedProjects = response.items;
         setProjects(fetchedProjects); 
+      })
+      .catch(console.error);
+
+    client.getEntries({ content_type: 'about', limit: 1 }) // Fetch about content type
+      .then((response) => {
+        if (response.items.length > 0) {
+          setAboutContent(response.items[0].fields.about); // Assuming 'about' is the rich text field ID
+        }
       })
       .catch(console.error);
   }, []);
@@ -174,6 +186,11 @@ function App() {
     setIsAnimatingToTarget(true); // Start the animation
     setIsRotating(false); // Stop continuous rotation
     setFocusedProject(clickedProjectObject); // Set focused project (info shown in footer)
+
+    justFocusedRef.current = true;
+    setTimeout(() => {
+      justFocusedRef.current = false;
+    }, 50); // Short delay
   };
 
   // Handler for when the animation completes
@@ -190,15 +207,44 @@ function App() {
     setIsRotating(true); 
     setFocusedProject(null); 
     setIsAnimatingToTarget(false); // Explicitly stop target animation
-    // targetRotation can be left as is or set to null, useFrame will take over with isRotating=true
+  };
+
+  const handleAppContainerClick = (event) => {
+    if (justFocusedRef.current) { // If a focus action just happened, ignore this click
+      return;
+    }
+
+    if (focusedProject && !isMobileView) {
+      if (event.target.closest('.project-footer')) {
+        return; 
+      }
+      // Check if the click target is the canvas itself or the app-container
+      // This is a heuristic. A more robust way involves checking if event.target is NOT part of the interactive 3D scene.
+      // For R3F, clicks on meshes usually have event.object set.
+      // If event.object is undefined, it might be a click on the canvas background.
+      // However, event.object is not available on standard DOM events.
+      
+      // A simple check: if the direct click target is the app-container itself, or the canvas element.
+      // The canvas element is not directly accessible here without a ref.
+      // Let's assume if it's not the footer, and not "justFocused", it's an "outside" click.
+      // This relies on ProjectPlane's stopPropagation.
+      handleResumeCarousel();
+    }
   };
 
   // MobileProjectList is now imported
 
+  const openInfoModal = () => setIsInfoModalOpen(true);
+  const closeInfoModal = () => setIsInfoModalOpen(false);
+
   return (
     <>
-      <Header /> 
-      <div className="app-container" style={{ width: '100vw', height: 'calc(100vh - 0px)', /* Adjust if header has fixed height */ position: 'relative', overflowY: isMobileView ? 'auto' : 'hidden' }}>
+      <Header onInfoClick={openInfoModal} /> {/* Pass handler to Header */}
+      <div 
+        className="app-container" 
+        style={{ width: '100vw', height: 'calc(100vh - 0px)', position: 'relative', overflowY: isMobileView ? 'auto' : 'hidden' }}
+        onClick={handleAppContainerClick} // Add click handler here
+      >
         {isMobileView ? (
           <MobileProjectList projects={displayableProjects} />
         ) : (
@@ -208,7 +254,7 @@ function App() {
               <ambientLight intensity={1.0} /> 
               <pointLight position={[0, 10, 10]} intensity={0.5} />
               <Suspense fallback={null}>
-            <CameraRig isPillHovered={isPillHovered}> 
+            <CameraRig> {/* isHTMLLinkHovered prop removed */}
               <group position-y={0.25}> {/* Adjust this Y value to move carousel up/down */}
                 {displayableProjects.length > 0 && ( 
                   <ProjectCarousel 
@@ -216,7 +262,7 @@ function App() {
                     isRotating={isRotating}
                       onProjectClick={handleProjectClick} 
                       onResumeCarousel={handleResumeCarousel} 
-                      onPillHover={setIsPillHovered} 
+                      // onProjectLinkHover prop removed
                       radius={CAROUSEL_RADIUS} 
                       focusedProjectId={focusedProject?.sys?.id} 
                       targetRotation={targetRotation} 
@@ -231,9 +277,15 @@ function App() {
             <ProjectFooter 
               projectDetails={focusedProject?.fields} 
               isVisible={!!focusedProject} 
+              // onResumeCarousel prop removed from ProjectFooter
             /> 
           </>
         )}
+        <InfoModal 
+          content={aboutContent} 
+          isOpen={isInfoModalOpen} 
+          onClose={closeInfoModal} 
+        />
       </div>
     </>
   );

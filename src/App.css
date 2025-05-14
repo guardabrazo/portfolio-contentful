@@ -37,27 +37,58 @@ h1 {
   /* border-top: 2px solid black;  */
   font-family: 'Darker Grotesque', sans-serif; 
   
-  /* Flex Layout for two main blocks */
+  /* Reverted to two-column Flex Layout */
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Align items to the top by default */
-  padding: 10px 15px; /* Add some overall padding to the footer */
-  /* Base styles - transition applied by react-transition-group classes */
+  align-items: flex-start; 
+  padding: 10px 15px; 
 }
 
-.footer-left-block {
+/* Column styles for two-column layout */
+.footer-title-description-block { /* Column 1 */
   flex-basis: 70%;
-  padding-right: 15px; /* Space between left and right blocks */
+  padding-right: 15px; 
+  display: flex; /* To manage layout of title-pill-wrapper and description */
+  flex-direction: column;
 }
 
-.footer-right-block {
+.footer-title-pill-wrapper {
+  display: flex; /* Align title and pill on the same line */
+  align-items: center; /* Vertically align title and pill */
+  margin-bottom: 5px; /* Space between title/pill line and description */
+}
+
+.footer-project-pill {
+  display: inline-block;
+  padding: 2px 10px; /* Adjust padding for pill size */
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+  border-radius: 25px; /* Pill shape */
+  text-decoration: none;
+  font-size: 0.85em; /* Smaller font size for pill */
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 30px; /* Space between title and pill */
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.footer-project-pill:hover {
+  background-color: black;
+  color: white;
+}
+
+.footer-client-year-block { /* Column 2 */
   flex-basis: 30%;
   text-align: right;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Push both client and year to the bottom */
-  align-self: stretch; /* Make right block take full height of footer row */
+  justify-content: flex-end; /* Align content (Client/Year) to the bottom */
+  align-self: stretch; /* Make block take full height of footer row */
 }
+
+/* Removed .footer-link-block styles */
 
 /* react-transition-group classes for fade effect */
 .fade-enter {
@@ -102,6 +133,16 @@ h1 {
 .footer-client-text strong, 
 .footer-year-text strong { /* Keep strong tags bold */
   font-weight: 500;
+}
+
+.footer-client-year {
+  /* Groups client and year text */
+}
+
+/* Removed .footer-view-project-link styles as the element is removed from footer */
+
+.footer-view-project-link:hover {
+  text-decoration: underline;
 }
 
 /* No line break for title and description (they are block elements, so this is default) */
@@ -201,3 +242,104 @@ h1 {
 }
 
 /* Remove .mobile-project-view-link styles as it's removed from JSX */
+
+/* Info Modal Styles */
+.info-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.85); /* Slightly more opaque */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; 
+}
+
+.info-modal-content-wrapper { /* Renamed from .info-modal-content */
+  padding: 20px; /* Reduced padding */
+  border-radius: 4px; /* Smaller radius */
+  max-width: 800px;
+  width: 100%; /* Or a fixed width like 700px */
+  max-height: 90vh; /* Allow more height */
+  overflow-y: auto;
+  position: relative;
+  /* background-color: white; Added background color for the wrapper */
+  /* box-shadow: 0 4px 20px rgba(0,0,0,0.15); Softer shadow */
+  display: flex;
+  flex-direction: column; /* Stack text area and button if button was inside */
+  align-items: center; /* Center text area horizontally if it's narrower */
+  justify-content: center; /* Center text area vertically */
+}
+
+.info-modal-text-content-area {
+  width: 100%; 
+  max-width: 100%; /* Ensure it doesn't expand beyond parent */
+  box-sizing: border-box; /* Include padding in width calculation */
+  position: relative; 
+  padding: 20px; 
+  overflow-x: hidden; 
+  /* word-wrap and overflow-wrap are good, but let's also ensure children behave */
+}
+
+.info-modal-close-button {
+  position: absolute;
+  top: 5px;  /* Position relative to text-content-area */
+  right: 5px; /* Position relative to text-content-area */
+  background: none;
+  border: none;
+  font-size: 5em; /* Adjusted size */
+  color: #000000;
+  cursor: pointer;
+  line-height: 1; /* More normal line height */
+  padding: 5px; /* Make it easier to click */
+}
+.info-modal-close-button:hover {
+  color: #555; /* Slightly lighter on hover */
+}
+
+.info-modal-text-content { 
+  /* This class is not directly used in InfoModal.jsx's structure for the main text area */
+}
+.info-modal-paragraph {
+  margin-bottom: 1em;
+  line-height: 1;
+  font-size: 3em;
+  word-wrap: break-word; /* Ensure paragraphs wrap long words */
+  overflow-wrap: break-word; /* Standard property */
+  hyphens: auto; /* Optional: allow hyphenation */
+}
+.info-modal-h1 {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+  margin-top: 0;
+}
+.info-modal-h2 {
+  font-size: 1.6em;
+  margin-bottom: 0.4em;
+  margin-top: 1em;
+}
+.info-modal-link {
+  color: #000000; 
+  text-decoration: underline;
+}
+.info-modal-link:hover {
+  color: #333333; /* Darken on hover */
+}
+
+/* CSSTransition classes for modal fade */
+.modal-fade-enter {
+  opacity: 0;
+}
+.modal-fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+.modal-fade-exit {
+  opacity: 1;
+}
+.modal-fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}

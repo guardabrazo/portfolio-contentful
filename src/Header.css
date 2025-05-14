@@ -15,7 +15,7 @@
 
 .header-name {
   font-size: 2.75em; /* Adjust size */
-  font-weight: 500; /* Black weight for impact */
+  font-weight: 400; /* Black weight for impact */
   /* text-transform: uppercase;*/
 }
 
@@ -33,3 +33,23 @@
 }
 
 /* Removed .header-pill-link styles */
+
+/* Styles for the Info button to look like a link */
+.header-info-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  margin-left: 20px; /* Same margin as .header-nav a */
+  font-family: inherit;
+  font-size: 2.0em; /* Same font size as .header-nav a */
+  font-weight: 400; /* Same font weight as .header-nav a */
+  color: black; /* Same color as .header-nav a */
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.header-info-button:hover {
+  text-decoration: underline; /* Underline on hover */
+}
