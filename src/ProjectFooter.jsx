@@ -32,10 +32,10 @@ function ProjectFooter({ projectDetails, isVisible }) { // Removed onResumeCarou
             {title && <h2 className="footer-title-text">{title}</h2>}
             {detailsForRender?.link && (
               <a 
-                href={detailsForRender.link} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="footer-project-pill"
+                href={detailsForRender.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-project-pill transparent-pill"
               >
                 FULL PROJECT
               </a>

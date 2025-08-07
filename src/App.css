@@ -79,6 +79,17 @@ h1 {
   color: white;
 }
 
+.transparent-pill {
+  background-color: transparent;
+  border: 1px solid black;
+  color: black;
+}
+
+.transparent-pill:hover {
+  background-color: black;
+  color: white;
+}
+
 .footer-client-year-block { /* Column 2 */
   flex-basis: 30%;
   text-align: right;

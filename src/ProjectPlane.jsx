@@ -29,12 +29,12 @@ const RoundedRectMaterial = shaderMaterial(
 extend({ RoundedRectMaterial });
 
 // Accept index, planeScale. Removed onProjectLinkHover, onResumeCarousel.
-function ProjectPlane({ project, position, index, onPlaneClick, isFocused, planeScale = 1.0 }) {
+function ProjectPlane({ project, position, index, onPlaneClick, isFocused, planeScale = 1.0, anyProjectFocused }) {
   const groupRef = useRef();
+  const materialRef = useRef();
   const [hovered, setHovered] = useState(false);
-  const randomZRotation = useMemo(() => MathUtils.randFloatSpread(0.2), []);
-  const videoRef = useRef(null); 
-  const [texture, setTexture] = useState(null); 
+  const videoRef = useRef(null);
+  const [texture, setTexture] = useState(null);
   const posterImageUrl = project.fields.poster?.fields?.file?.url;
   const videoUrl = project.fields.video?.fields?.file?.url;
 
@@ -100,16 +100,17 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
   }, [isFocused, texture, videoUrl]); 
 
   useFrame((state, delta) => {
-    if (groupRef.current && texture) { 
-      // Only apply hover scaling if the plane is NOT focused
-      const targetHoverScale = !isFocused && hovered ? planeScale * 1.1 : planeScale; 
+    if (groupRef.current && texture) {
+      const targetHoverScale = !isFocused && hovered ? planeScale * 1.1 : planeScale;
       groupRef.current.scale.x = MathUtils.lerp(groupRef.current.scale.x, targetHoverScale, delta * 5);
       groupRef.current.scale.y = MathUtils.lerp(groupRef.current.scale.y, targetHoverScale, delta * 5);
-      groupRef.current.scale.z = MathUtils.lerp(groupRef.current.scale.z, targetHoverScale, delta * 5); 
-      
-      // Z-tilt animation remains
-      const targetZRotation = isFocused ? 0 : randomZRotation; 
-      groupRef.current.rotation.z = MathUtils.lerp(groupRef.current.rotation.z, targetZRotation, delta * 5);
+      groupRef.current.scale.z = MathUtils.lerp(groupRef.current.scale.z, targetHoverScale, delta * 5);
+
+      // Fade in/out logic
+      if (materialRef.current) {
+        const targetOpacity = isFocused || !anyProjectFocused ? 1.0 : 0.2;
+        materialRef.current.opacity = MathUtils.lerp(materialRef.current.opacity, targetOpacity, delta * 5);
+      }
     }
   });
 
@@ -122,12 +123,10 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
   const basePlaneSize = 4.5; // Match the geometry args
 
   return (
-    <Billboard position={position}> 
-      <group 
-        ref={groupRef} 
-        rotation-z={randomZRotation}
-        // Apply the base scale from props here
-        scale={[planeScale, planeScale, planeScale]} 
+    <Billboard position={position}>
+      <group
+        ref={groupRef}
+        scale={[planeScale, planeScale, planeScale]}
         onPointerOver={(event) => { event.stopPropagation(); setHovered(true); }}
         onPointerOut={(event) => {
           event.stopPropagation();
@@ -142,8 +141,8 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
       >
         {/* Geometry size remains constant, scale is applied to the group */}
         <mesh name="front-plane">
-          <planeGeometry args={[basePlaneSize, basePlaneSize]} /> 
-          <roundedRectMaterial map={texture} radius={0.15} smoothness={0.01} transparent={true} toneMapped={false} />
+          <planeGeometry args={[basePlaneSize, basePlaneSize]} />
+          <roundedRectMaterial ref={materialRef} map={texture} radius={0.15} smoothness={0.01} transparent={true} toneMapped={false} />
         </mesh>
         {/* "GO TO FULL PROJECT" link removed from here */}
         {/* Debug angle display REMOVED */}

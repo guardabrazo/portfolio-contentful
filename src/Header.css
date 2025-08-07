@@ -8,7 +8,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  background-color: white; /* Ensure it has a background */
+  background-color: transparent; /* Ensure it has a background */
   z-index: 100; /* Keep it above other content like canvas */
   box-sizing: border-box;
 }

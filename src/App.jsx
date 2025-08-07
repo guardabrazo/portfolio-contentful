@@ -42,7 +42,7 @@ const generatePositions = (num, radius, minDistance) => {
 
 
 // New component for scattered projects
-function ProjectScatter({ projects, onProjectClick, focusedProjectId }) {
+function ProjectScatter({ projects, onProjectClick, focusedProjectId, anyProjectFocused }) {
   const [positions, setPositions] = useState([]);
 
   useEffect(() => {
@@ -64,6 +64,7 @@ function ProjectScatter({ projects, onProjectClick, focusedProjectId }) {
           planeScale={1.0} // Keep scale uniform for now
           onPlaneClick={() => onProjectClick(project, positions[index])}
           isFocused={project.sys.id === focusedProjectId}
+          anyProjectFocused={anyProjectFocused}
         />
       ))}
     </group>
@@ -123,9 +124,12 @@ function App() {
 
   const handleProjectClick = (clickedProject, position) => {
     setFocusedProject(clickedProject);
-    // Set target for camera to move to (a bit behind the project)
-    const newTargetPos = position.clone().add(new THREE.Vector3(0, 1, 5));
+    const newTargetPos = position.clone().add(new THREE.Vector3(0, 0, 5));
     setTargetPosition(newTargetPos);
+
+    if (controlsRef.current) {
+      controlsRef.current.enabled = false;
+    }
 
     justFocusedRef.current = true;
     setTimeout(() => {
@@ -136,6 +140,9 @@ function App() {
   const handleDeselect = () => {
     setFocusedProject(null);
     setTargetPosition(null); // Reset camera target
+    if (controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
   };
 
   const handleAppContainerClick = (event) => {
@@ -157,7 +164,7 @@ function App() {
       if (targetPosition) {
         state.camera.position.lerp(targetPosition, 0.05);
         if (controlsRef.current) {
-          controlsRef.current.target.lerp(targetPosition.clone().sub(new THREE.Vector3(0, 1, 5)), 0.05);
+          controlsRef.current.target.lerp(targetPosition.clone().sub(new THREE.Vector3(0, 0, 5)), 0.05);
         }
       }
     });
@@ -186,6 +193,8 @@ function App() {
                   enableZoom={true}
                   enablePan={true}
                   enableRotate={true}
+                  autoRotate={!focusedProject}
+                  autoRotateSpeed={0.5}
                   maxPolarAngle={Math.PI / 1.8} // Restrict vertical rotation
                   minPolarAngle={Math.PI / 3}
                 />
@@ -195,6 +204,7 @@ function App() {
                     projects={displayableProjects}
                     onProjectClick={handleProjectClick}
                     focusedProjectId={focusedProject?.sys?.id}
+                    anyProjectFocused={!!focusedProject}
                   />
                 )}
               </Suspense>
