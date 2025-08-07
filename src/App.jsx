@@ -176,9 +176,9 @@ function App() {
         state.camera.position.lerp(targetPosition, 0.05);
         controlsRef.current.target.lerp(focusPoint, 0.05);
       } else {
-        // Resume autorotate
+        // Resume autorotate and return to initial position
         controlsRef.current.autoRotate = true;
-        // Optional: smoothly return to a neutral target if needed
+        state.camera.position.lerp(initialCameraPosition, 0.02);
         controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
       }
     });
