@@ -135,6 +135,9 @@ function App() {
   const handleProjectClick = (clickedProject, position) => {
     setFocusedProject(clickedProject);
     setFocusPoint(position); // Set the focus point for the camera rig
+    if (controlsRef.current) {
+      controlsRef.current.enabled = false;
+    }
 
     justFocusedRef.current = true;
     setTimeout(() => {
@@ -166,11 +169,22 @@ function App() {
   // Camera Rig to handle rotation and focusing
   function CameraRig({ focusPoint, isFocused }) {
     useFrame((state, delta) => {
+      if (!controlsRef.current) return;
+
       if (isFocused && focusPoint) {
-        // Stop autorotate and focus on the project
+        controlsRef.current.autoRotate = false;
         const targetPosition = focusPoint.clone().add(new THREE.Vector3(0, 0, 8));
         state.camera.position.lerp(targetPosition, 0.05);
         controlsRef.current.target.lerp(focusPoint, 0.05);
+      } else {
+        const distance = state.camera.position.distanceTo(initialCameraPosition);
+        if (distance > 0.1) {
+          controlsRef.current.autoRotate = false;
+          state.camera.position.lerp(initialCameraPosition, 0.02);
+          controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
+        } else {
+          controlsRef.current.autoRotate = true;
+        }
       }
     });
     return null;
@@ -199,7 +213,6 @@ function App() {
                   enableZoom={true}
                   enablePan={true}
                   enableRotate={true}
-                  autoRotate={!focusedProject}
                   autoRotateSpeed={0.5}
                   maxPolarAngle={Math.PI / 1.8}
                   minPolarAngle={Math.PI / 3}
