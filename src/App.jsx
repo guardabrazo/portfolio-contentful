@@ -177,13 +177,12 @@ function App() {
         state.camera.position.lerp(targetPosition, 0.05);
         controlsRef.current.target.lerp(focusPoint, 0.05);
       } else {
+        controlsRef.current.autoRotate = true; // Always rotate when not focused
         const distance = state.camera.position.distanceTo(initialCameraPosition);
         if (distance > 0.1) {
-          controlsRef.current.autoRotate = false;
+          // Gently pull camera back to initial position while rotating
           state.camera.position.lerp(initialCameraPosition, 0.02);
           controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
-        } else {
-          controlsRef.current.autoRotate = true;
         }
       }
     });
@@ -213,6 +212,7 @@ function App() {
                   enableZoom={true}
                   enablePan={true}
                   enableRotate={true}
+                  autoRotate={true}
                   autoRotateSpeed={0.5}
                   maxPolarAngle={Math.PI / 1.8}
                   minPolarAngle={Math.PI / 3}
