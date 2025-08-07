@@ -109,7 +109,7 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
 
       // Fade in/out logic
       if (materialRef.current) {
-        const targetOpacity = isFocused || !anyProjectFocused ? 1.0 : 0.2;
+        const targetOpacity = isFocused || !anyProjectFocused ? 1.0 : 0.0;
         materialRef.current.uniforms.opacity.value = MathUtils.lerp(materialRef.current.uniforms.opacity.value, targetOpacity, delta * 5);
       }
     }

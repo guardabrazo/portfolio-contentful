@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import { client } from './contentfulClient';
 import ProjectPlane from './ProjectPlane';
 import ProjectFooter from './ProjectFooter';
@@ -7,20 +8,7 @@ import Header from './Header';
 import MobileProjectList from './MobileProjectList';
 import InfoModal from './InfoModal';
 import * as THREE from 'three';
-import { Vector3 } from 'three';
 import './App.css';
-
-function CameraRig({ children, isFocused }) {
-  const vec = new Vector3();
-  useFrame((state) => {
-    if (!isFocused) {
-      const targetY = 2 + state.pointer.y * 1.2;
-      state.camera.position.lerp(vec.set(state.camera.position.x, targetY, state.camera.position.z), 0.05);
-      state.camera.lookAt(0, 0, 0);
-    }
-  });
-  return children;
-}
 
 // Function to generate random positions for projects
 const generatePositions = (num, radius, minDistance) => {
@@ -92,6 +80,8 @@ function App() {
   const [aboutContent, setAboutContent] = useState(null);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const justFocusedRef = useRef(false);
+  const controlsRef = useRef();
+  const initialCameraPosition = new THREE.Vector3(0, 2, 25);
 
   useEffect(() => {
     const checkViewport = () => {
@@ -117,6 +107,17 @@ function App() {
         }
       })
       .catch(console.error);
+
+    const handleEsc = (event) => {
+      if (event.keyCode === 27) {
+        handleDeselect();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
   }, []);
 
   const displayableProjects = projects.filter(
@@ -135,8 +136,12 @@ function App() {
 
   const handleProjectClick = (clickedProject, position) => {
     setFocusedProject(clickedProject);
-    const newTargetPos = position.clone().add(new THREE.Vector3(0, 0, 8)); // Move camera in front
+    const newTargetPos = position.clone().add(new THREE.Vector3(0, 0, 8));
     setTargetPosition(newTargetPos);
+
+    if (controlsRef.current) {
+      controlsRef.current.enabled = false;
+    }
 
     justFocusedRef.current = true;
     setTimeout(() => {
@@ -146,7 +151,10 @@ function App() {
 
   const handleDeselect = () => {
     setFocusedProject(null);
-    setTargetPosition(null); // Reset camera target
+    setTargetPosition(initialCameraPosition);
+    if (controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
   };
 
   const handleAppContainerClick = (event) => {
@@ -167,7 +175,13 @@ function App() {
     useFrame((state) => {
       if (targetPosition) {
         state.camera.position.lerp(targetPosition, 0.05);
-        state.camera.lookAt(targetPosition.clone().sub(new THREE.Vector3(0, 0, 8)));
+        if (controlsRef.current) {
+          if (focusedProject) {
+            controlsRef.current.target.lerp(targetPosition.clone().sub(new THREE.Vector3(0, 0, 8)), 0.05);
+          } else {
+            controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
+          }
+        }
       }
     });
     return null;
@@ -185,22 +199,30 @@ function App() {
           <MobileProjectList projects={displayableProjects} />
         ) : (
           <>
-            <Canvas camera={{ position: [0, 2, 20], fov: 50 }}>
+            <Canvas camera={{ position: initialCameraPosition, fov: 50 }}>
               <color attach="background" args={['#ffffff']} />
               <ambientLight intensity={1.0} />
               <pointLight position={[0, 10, 10]} intensity={0.5} />
               <Suspense fallback={null}>
-                <CameraRig isFocused={!!focusedProject}>
-                  <CameraController targetPosition={targetPosition} />
-                  {displayableProjects.length > 0 && (
-                    <ProjectScatter
-                      projects={displayableProjects}
-                      onProjectClick={handleProjectClick}
-                      focusedProjectId={focusedProject?.sys?.id}
-                      anyProjectFocused={!!focusedProject}
-                    />
-                  )}
-                </CameraRig>
+                <OrbitControls
+                  ref={controlsRef}
+                  enableZoom={true}
+                  enablePan={true}
+                  enableRotate={true}
+                  autoRotate={!focusedProject}
+                  autoRotateSpeed={0.5}
+                  maxPolarAngle={Math.PI / 1.8}
+                  minPolarAngle={Math.PI / 3}
+                />
+                <CameraController targetPosition={targetPosition} />
+                {displayableProjects.length > 0 && (
+                  <ProjectScatter
+                    projects={displayableProjects}
+                    onProjectClick={handleProjectClick}
+                    focusedProjectId={focusedProject?.sys?.id}
+                    anyProjectFocused={!!focusedProject}
+                  />
+                )}
               </Suspense>
             </Canvas>
             <ProjectFooter
