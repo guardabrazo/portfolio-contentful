@@ -171,21 +171,28 @@ function App() {
     useFrame((state, delta) => {
       if (!controlsRef.current) return;
 
+      // Animate FOV for a zoom effect
+      const targetFov = isFocused ? 30 : 50;
+      state.camera.fov = THREE.MathUtils.lerp(state.camera.fov, targetFov, 0.05);
+      state.camera.updateProjectionMatrix();
+
       if (isFocused && focusPoint) {
         controlsRef.current.autoRotate = false;
-        const targetPosition = focusPoint.clone().add(new THREE.Vector3(0, 0, 8));
+        // Move camera to a position looking directly at the plane
+        const targetPosition = focusPoint.clone().add(new THREE.Vector3(0, 1, 8)); // Slightly elevated
         state.camera.position.lerp(targetPosition, 0.05);
         controlsRef.current.target.lerp(focusPoint, 0.05);
       } else {
-        controlsRef.current.autoRotate = true; // Always rotate when not focused
+        controlsRef.current.autoRotate = true; // Resume rotation
         const distance = state.camera.position.distanceTo(initialCameraPosition);
         if (distance > 0.1) {
-          // Gently pull camera back to initial position while rotating
+          // Gently pull camera back to initial position
           state.camera.position.lerp(initialCameraPosition, 0.02);
           controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
         }
       }
-      // Required to update controls state including auto-rotation
+
+      // Update controls to apply changes
       if (controlsRef.current) {
         controlsRef.current.update();
       }
