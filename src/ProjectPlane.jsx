@@ -28,11 +28,10 @@ const RoundedRectMaterial = shaderMaterial(
 );
 extend({ RoundedRectMaterial });
 
-// Accept index, onResumeCarousel, planeScale. Removed onProjectLinkHover.
-function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel, isFocused, planeScale = 1.0 }) { 
-  const groupRef = useRef(); 
+// Accept index, planeScale. Removed onProjectLinkHover, onResumeCarousel.
+function ProjectPlane({ project, position, index, onPlaneClick, isFocused, planeScale = 1.0 }) {
+  const groupRef = useRef();
   const [hovered, setHovered] = useState(false);
-  // isPointerOverHtmlRef is no longer needed as the HTML pill is removed
   const randomZRotation = useMemo(() => MathUtils.randFloatSpread(0.2), []);
   const videoRef = useRef(null); 
   const [texture, setTexture] = useState(null); 
@@ -132,13 +131,12 @@ function ProjectPlane({ project, position, index, onPlaneClick, onResumeCarousel
         onPointerOver={(event) => { event.stopPropagation(); setHovered(true); }}
         onPointerOut={(event) => {
           event.stopPropagation();
-          setHovered(false); 
-          // No longer call onResumeCarousel here
+          setHovered(false);
         }}
-        onClick={(event) => { 
-          event.stopPropagation(); 
+        onClick={(event) => {
+          event.stopPropagation();
           if (onPlaneClick) {
-            onPlaneClick(index); // Pass index to the handler
+            onPlaneClick(); // No longer need to pass index
           }
         }}
       >
