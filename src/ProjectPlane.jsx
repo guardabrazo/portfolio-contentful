@@ -6,7 +6,7 @@ import { Billboard, Html, shaderMaterial } from '@react-three/drei';
 import { extend } from '@react-three/fiber';
 
 const RoundedRectMaterial = shaderMaterial(
-  { map: null, radius: 0.15, smoothness: 0.01 },
+  { map: null, radius: 0.15, smoothness: 0.01, opacity: 1.0 },
   /*glsl*/`
     varying vec2 vUv;
     void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
@@ -15,6 +15,7 @@ const RoundedRectMaterial = shaderMaterial(
     uniform sampler2D map;
     uniform float radius;
     uniform float smoothness;
+    uniform float opacity;
     varying vec2 vUv;
     void main() {
       vec2 uv = vUv * 2.0 - 1.0;
@@ -22,7 +23,7 @@ const RoundedRectMaterial = shaderMaterial(
       float dist = length(max(abs_uv - vec2(1.0 - radius), 0.0)) - radius;
       float alpha = 1.0 - smoothstep(-smoothness, 0.0, dist);
       vec4 texColor = texture2D(map, vUv);
-      gl_FragColor = vec4(texColor.rgb, texColor.a * alpha);
+      gl_FragColor = vec4(texColor.rgb, texColor.a * alpha * opacity);
     }
   `
 );
@@ -109,7 +110,7 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
       // Fade in/out logic
       if (materialRef.current) {
         const targetOpacity = isFocused || !anyProjectFocused ? 1.0 : 0.2;
-        materialRef.current.opacity = MathUtils.lerp(materialRef.current.opacity, targetOpacity, delta * 5);
+        materialRef.current.uniforms.opacity.value = MathUtils.lerp(materialRef.current.uniforms.opacity.value, targetOpacity, delta * 5);
       }
     }
   });
@@ -142,7 +143,7 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
         {/* Geometry size remains constant, scale is applied to the group */}
         <mesh name="front-plane">
           <planeGeometry args={[basePlaneSize, basePlaneSize]} />
-          <roundedRectMaterial ref={materialRef} map={texture} radius={0.15} smoothness={0.01} transparent={true} toneMapped={false} />
+          <roundedRectMaterial ref={materialRef} map={texture} radius={0.15} smoothness={0.01} transparent={true} toneMapped={false} opacity={1.0} />
         </mesh>
         {/* "GO TO FULL PROJECT" link removed from here */}
         {/* Debug angle display REMOVED */}
