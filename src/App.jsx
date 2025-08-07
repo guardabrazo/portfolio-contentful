@@ -135,9 +135,6 @@ function App() {
   const handleProjectClick = (clickedProject, position) => {
     setFocusedProject(clickedProject);
     setFocusPoint(position); // Set the focus point for the camera rig
-    if (controlsRef.current) {
-      controlsRef.current.enabled = false;
-    }
 
     justFocusedRef.current = true;
     setTimeout(() => {
@@ -174,10 +171,6 @@ function App() {
         const targetPosition = focusPoint.clone().add(new THREE.Vector3(0, 0, 8));
         state.camera.position.lerp(targetPosition, 0.05);
         controlsRef.current.target.lerp(focusPoint, 0.05);
-      } else {
-        // Return to initial position
-        state.camera.position.lerp(initialCameraPosition, 0.02);
-        controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
       }
     });
     return null;
