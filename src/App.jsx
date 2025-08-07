@@ -1,16 +1,14 @@
 import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 import { client } from './contentfulClient';
 import ProjectPlane from './ProjectPlane';
 import ProjectFooter from './ProjectFooter';
 import Header from './Header';
 import MobileProjectList from './MobileProjectList';
 import InfoModal from './InfoModal';
-import * as THREE from 'three';
 import './App.css';
-
-// Function to generate random positions for projects
 const generatePositions = (num, radius, minDistance) => {
   const positions = [];
   let attempts = 0;
@@ -75,7 +73,7 @@ function ProjectScatter({ projects, onProjectClick, focusedProjectId, anyProject
 function App() {
   const [projects, setProjects] = useState([]);
   const [focusedProject, setFocusedProject] = useState(null);
-  const [targetPosition, setTargetPosition] = useState(null); // For camera focus
+  const [focusPoint, setFocusPoint] = useState(null); // For camera focus
   const [isMobileView, setIsMobileView] = useState(false);
   const [aboutContent, setAboutContent] = useState(null);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -136,9 +134,7 @@ function App() {
 
   const handleProjectClick = (clickedProject, position) => {
     setFocusedProject(clickedProject);
-    const newTargetPos = position.clone().add(new THREE.Vector3(0, 0, 8));
-    setTargetPosition(newTargetPos);
-
+    setFocusPoint(position); // Set the focus point for the camera rig
     if (controlsRef.current) {
       controlsRef.current.enabled = false;
     }
@@ -151,10 +147,9 @@ function App() {
 
   const handleDeselect = () => {
     setFocusedProject(null);
-    setTargetPosition(null);
+    setFocusPoint(null); // Clear the focus point
     if (controlsRef.current) {
       controlsRef.current.enabled = true;
-      controlsRef.current.autoRotate = true;
     }
   };
 
@@ -171,28 +166,25 @@ function App() {
   const openInfoModal = () => setIsInfoModalOpen(true);
   const closeInfoModal = () => setIsInfoModalOpen(false);
 
-  // Camera animation logic
-  const CameraController = ({ targetPosition }) => {
-    useFrame((state) => {
-      if (targetPosition) {
+  // Camera Rig to handle rotation and focusing
+  function CameraRig({ focusPoint, isFocused }) {
+    useFrame((state, delta) => {
+      if (isFocused && focusPoint) {
+        // Stop autorotate and focus on the project
+        controlsRef.current.autoRotate = false;
+        const targetPosition = focusPoint.clone().add(new THREE.Vector3(0, 0, 8));
         state.camera.position.lerp(targetPosition, 0.05);
-        if (controlsRef.current) {
-          if (focusedProject) {
-            controlsRef.current.target.lerp(targetPosition.clone().sub(new THREE.Vector3(0, 0, 8)), 0.05);
-          } else {
-            controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
-          }
-        }
+        controlsRef.current.target.lerp(focusPoint, 0.05);
       } else {
-        // This will handle the return to initial position
-        state.camera.position.lerp(initialCameraPosition, 0.05);
-        if (controlsRef.current) {
-          controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
-        }
+        // Resume autorotate
+        controlsRef.current.autoRotate = true;
+        // Optional: smoothly return to a neutral target if needed
+        controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
       }
     });
     return null;
-  };
+  }
+
 
   return (
     <>
@@ -221,7 +213,7 @@ function App() {
                   maxPolarAngle={Math.PI / 1.8}
                   minPolarAngle={Math.PI / 3}
                 />
-                <CameraController targetPosition={targetPosition} />
+                <CameraRig focusPoint={focusPoint} isFocused={!!focusedProject} />
                 {displayableProjects.length > 0 && (
                   <ProjectScatter
                     projects={displayableProjects}
