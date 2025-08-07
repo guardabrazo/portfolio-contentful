@@ -135,8 +135,9 @@ function ProjectPlane({ project, position, index, onPlaneClick, isFocused, plane
         }}
         onClick={(event) => {
           event.stopPropagation();
-          if (onPlaneClick) {
-            onPlaneClick(); // No longer need to pass index
+          // Only allow clicking if no other project is already focused.
+          if (onPlaneClick && !anyProjectFocused) {
+            onPlaneClick();
           }
         }}
       >
