@@ -16,7 +16,7 @@ const generatePositions = (num, radius, minDistance) => {
 
   while (positions.length < num && attempts < maxAttempts) {
     const x = (Math.random() - 0.5) * radius * 2;
-    const y = (Math.random() - 0.5) * radius * 0.5; // Keep Y spread smaller
+    const y = (Math.random() - 0.5) * radius * 1.5; // Keep Y spread smaller
     const z = (Math.random() - 0.5) * radius * 2;
     const newPos = new THREE.Vector3(x, y, z);
 
@@ -184,6 +184,10 @@ function App() {
           state.camera.position.lerp(initialCameraPosition, 0.02);
           controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.02);
         }
+      }
+      // Required to update controls state including auto-rotation
+      if (controlsRef.current) {
+        controlsRef.current.update();
       }
     });
     return null;
