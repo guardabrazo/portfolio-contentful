@@ -151,9 +151,10 @@ function App() {
 
   const handleDeselect = () => {
     setFocusedProject(null);
-    setTargetPosition(initialCameraPosition);
+    setTargetPosition(null);
     if (controlsRef.current) {
       controlsRef.current.enabled = true;
+      controlsRef.current.autoRotate = true;
     }
   };
 
@@ -181,6 +182,12 @@ function App() {
           } else {
             controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
           }
+        }
+      } else {
+        // This will handle the return to initial position
+        state.camera.position.lerp(initialCameraPosition, 0.05);
+        if (controlsRef.current) {
+          controlsRef.current.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
         }
       }
     });
