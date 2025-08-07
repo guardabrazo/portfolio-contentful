@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { client } from './contentfulClient';
@@ -9,15 +9,21 @@ import Header from './Header';
 import MobileProjectList from './MobileProjectList';
 import InfoModal from './InfoModal';
 import './App.css';
+
 const generatePositions = (num, radius, minDistance) => {
   const positions = [];
   let attempts = 0;
-  const maxAttempts = 500; // Prevent infinite loops
+  const maxAttempts = 1000; // Increased attempts for denser packing
 
   while (positions.length < num && attempts < maxAttempts) {
-    const x = (Math.random() - 0.5) * radius * 2;
-    const y = (Math.random() - 0.5) * radius * 1.5; // Keep Y spread smaller
-    const z = (Math.random() - 0.5) * radius * 2;
+    // Generate a random point within a sphere for a more 3D cloud effect
+    const theta = Math.acos((2 * Math.random()) - 1);
+    const phi = Math.random() * 2 * Math.PI;
+    const r = radius * Math.cbrt(Math.random()); // Cube root for uniform distribution
+
+    const x = r * Math.sin(theta) * Math.cos(phi);
+    const y = r * Math.sin(theta) * Math.sin(phi);
+    const z = r * Math.cos(theta);
     const newPos = new THREE.Vector3(x, y, z);
 
     let valid = true;
@@ -38,8 +44,6 @@ const generatePositions = (num, radius, minDistance) => {
   return positions;
 };
 
-
-// New component for scattered projects
 function ProjectScatter({ projects, positions, onProjectClick, focusedProjectId, anyProjectFocused }) {
   return (
     <group>
@@ -48,7 +52,7 @@ function ProjectScatter({ projects, positions, onProjectClick, focusedProjectId,
           key={project.sys.id}
           project={project}
           position={positions[index]}
-          planeScale={1.0} // Keep scale uniform for now
+          planeScale={1.0}
           onPlaneClick={() => onProjectClick(project, positions[index])}
           isFocused={project.sys.id === focusedProjectId}
           anyProjectFocused={anyProjectFocused}
@@ -58,24 +62,72 @@ function ProjectScatter({ projects, positions, onProjectClick, focusedProjectId,
   );
 }
 
+// This component manages the camera and controls.
+function CameraController({ isFocused, focusPoint, isOrbiting }) {
+  const { camera } = useThree();
+  const controlsRef = useRef();
+
+  useFrame((state, delta) => {
+    if (!controlsRef.current) return;
+
+    let targetFov = 50;
+    if (isFocused) {
+      const distance = camera.position.distanceTo(focusPoint);
+      const planeSize = 4.5; // This is the base size of the plane geometry.
+      // This is the value to tweak. A smaller value (e.g., 1.2) makes the plane appear larger.
+      const desiredVisibleHeight = planeSize * 1.5; 
+      targetFov = 2 * Math.atan(desiredVisibleHeight / (2 * distance)) * (180 / Math.PI);
+    }
+    
+    camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 0.05);
+    camera.updateProjectionMatrix();
+
+    // Animate the controls' target to center the selected project, or apply parallax effect.
+    let targetPosition = new THREE.Vector3(0, 0, 0);
+    if (isFocused) {
+      targetPosition = focusPoint;
+    } else {
+      // Add parallax effect when not focused
+      const parallaxFactor = 0.5; // Tweak this value for more/less effect
+      targetPosition.x = state.mouse.x * parallaxFactor;
+      targetPosition.y = state.mouse.y * parallaxFactor;
+    }
+
+    controlsRef.current.target.lerp(targetPosition, 0.05);
+    controlsRef.current.update();
+  });
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      camera={camera}
+      enableZoom={false}
+      enablePan={false}
+      enableRotate={true}
+      autoRotate={isOrbiting}
+      autoRotateSpeed={0.5}
+      maxPolarAngle={Math.PI / 1.8}
+      minPolarAngle={Math.PI / 3}
+      enableDamping={true}
+      dampingFactor={0.05}
+    />
+  );
+}
 
 function App() {
   const [projects, setProjects] = useState([]);
   const [positions, setPositions] = useState([]);
   const [focusedProject, setFocusedProject] = useState(null);
-  const [focusPoint, setFocusPoint] = useState(null); // For camera focus
+  const [focusPoint, setFocusPoint] = useState(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [aboutContent, setAboutContent] = useState(null);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isOrbiting, setIsOrbiting] = useState(true);
   const justFocusedRef = useRef(false);
-  const controlsRef = useRef();
   const initialCameraPosition = new THREE.Vector3(0, 2, 25);
 
   useEffect(() => {
-    const checkViewport = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
+    const checkViewport = () => setIsMobileView(window.innerWidth < 768);
     checkViewport();
     window.addEventListener('resize', checkViewport);
     return () => window.removeEventListener('resize', checkViewport);
@@ -101,21 +153,14 @@ function App() {
       .catch(console.error);
 
     const handleEsc = (event) => {
-      if (event.keyCode === 27) {
-        handleDeselect();
-      }
+      if (event.keyCode === 27) handleDeselect();
     };
     window.addEventListener('keydown', handleEsc);
-
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-    };
+    return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
   const displayableProjects = projects.filter(
-    (project) =>
-      project.fields.poster?.fields?.file?.url ||
-      project.fields.video?.fields?.file?.url
+    (project) => project.fields.poster?.fields?.file?.url || project.fields.video?.fields?.file?.url
   );
 
   if (displayableProjects.length > 0) {
@@ -129,51 +174,27 @@ function App() {
   const handleProjectClick = (clickedProject, position) => {
     setIsOrbiting(false);
     setFocusedProject(clickedProject);
-    setFocusPoint(position); // Set the focus point for the camera rig
-
+    setFocusPoint(position);
     justFocusedRef.current = true;
-    setTimeout(() => {
-      justFocusedRef.current = false;
-    }, 50);
+    setTimeout(() => { justFocusedRef.current = false; }, 50);
   };
 
   const handleDeselect = () => {
     setFocusedProject(null);
-    setFocusPoint(null); // Clear the focus point
+    setFocusPoint(null);
     setIsOrbiting(true);
   };
 
   const handleAppContainerClick = (event) => {
     if (justFocusedRef.current) return;
     if (focusedProject && !isMobileView) {
-      if (event.target.closest('.project-footer')) {
-        return;
-      }
+      if (event.target.closest('.project-footer')) return;
       handleDeselect();
     }
   };
 
   const openInfoModal = () => setIsInfoModalOpen(true);
   const closeInfoModal = () => setIsInfoModalOpen(false);
-
-  // This component will only manage the camera's FOV (zoom) and target.
-  function CameraManager({ isFocused, focusPoint }) {
-    useFrame((state) => {
-      if (!controlsRef.current) return;
-
-      // Animate FOV
-      // To make the camera closer or further when focused, change the first value (e.g., 20 is closer than 35)
-      const targetFov = isFocused ? 20 : 50;
-      state.camera.fov = THREE.MathUtils.lerp(state.camera.fov, targetFov, 0.05);
-      state.camera.updateProjectionMatrix();
-
-      // Animate controls target
-      const target = isFocused ? focusPoint : new THREE.Vector3(0, 0, 0);
-      controlsRef.current.target.lerp(target, 0.05);
-    });
-    return null;
-  }
-
 
   return (
     <>
@@ -187,26 +208,15 @@ function App() {
           <MobileProjectList projects={displayableProjects} />
         ) : (
           <>
-            <Canvas camera={{ position: initialCameraPosition, fov: 50 }}>
+            <Canvas camera={{ fov: 50, position: initialCameraPosition }} style={{ zIndex: 0 }}>
               <color attach="background" args={['#ffffff']} />
               <ambientLight intensity={1.0} />
               <pointLight position={[0, 10, 10]} intensity={0.5} />
               <Suspense fallback={null}>
-                <OrbitControls
-                  ref={controlsRef}
-                  enableZoom={false}
-                  enablePan={false}
-                  enableRotate={true}
-                  autoRotate={isOrbiting}
-                  autoRotateSpeed={0.5}
-                  maxPolarAngle={Math.PI / 1.8}
-                  minPolarAngle={Math.PI / 3}
-                  enableDamping={true}
-                  dampingFactor={0.05}
-                />
-                <CameraManager
+                <CameraController
                   isFocused={!!focusedProject}
                   focusPoint={focusPoint}
+                  isOrbiting={isOrbiting}
                 />
                 {displayableProjects.length > 0 && (
                   <ProjectScatter
